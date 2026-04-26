@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("patient")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deviceBindings    DeviceBinding[]
+  medicationRecords MedicationRecord[]
+}
+
+model Device {
+  id           String          @id @default(cuid())
+  serialNumber String          @unique
+  model        String          @default("TG-V1.0-ESP")
+  status       String          @default("inactive")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  bindings        DeviceBinding[]
+  tremorFeatures  TremorFeature[]
+}
+
+model DeviceBinding {
+  id        String   @id @default(cuid())
+  userId    String
+  deviceId  String
+  boundAt   DateTime @default(now())
+  unboundAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId, boundAt])
+}
+
+model MedicationRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  medication  String
+  dosage      String?
+  takenAt     DateTime
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TremorFeature {
+  id             String   @id @default(cuid())
+  deviceId       String
+  measuredAt     DateTime
+  intensityRms   Float
+  dominantFreqHz Float
+  createdAt      DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+}

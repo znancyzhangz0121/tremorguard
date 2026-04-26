@@ -1,0 +1,10 @@
+{
+  "name": "parkinson-workspace",
+  "private": true,
+  "scripts": {
+    "site:up": "./scripts/site-up.sh",
+    "site:down": "./scripts/site-down.sh",
+    "site:restart": "./scripts/site-restart.sh",
+    "site:status": "./scripts/site-status.sh"
+  }
+}

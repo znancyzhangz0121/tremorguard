@@ -1,0 +1,17 @@
+.DS_Store
+.omx/
+
+node_modules/
+dist/
+build/
+.npm-cache/
+node_modules_incomplete_*/
+
+.env
+.env.*
+!.env.example
+
+backend/node_modules/
+backend/dist/
+tremor-guard-frontend/node_modules/
+tremor-guard-frontend/dist/
