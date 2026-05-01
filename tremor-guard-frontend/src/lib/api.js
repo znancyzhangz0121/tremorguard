@@ -1,5 +1,3 @@
-const defaultProductionApiBaseUrl = 'http://localhost:3000/api'
-
 export function getApiBaseUrl(env = import.meta.env) {
   const configuredBaseUrl = env?.VITE_API_BASE_URL?.trim()
 
@@ -7,7 +5,15 @@ export function getApiBaseUrl(env = import.meta.env) {
     return configuredBaseUrl.replace(/\/$/, '')
   }
 
-  return env?.DEV ? '/api' : defaultProductionApiBaseUrl
+  if (env?.DEV) {
+    return '/api'
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/api`
+  }
+
+  return '/api'
 }
 
 export function buildApiUrl(path, env = import.meta.env) {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 export type StoredUser = {
   id: string;
@@ -17,7 +18,10 @@ type UsersFile = {
 
 @Injectable()
 export class UserStoreService {
-  private readonly filePath = join(process.cwd(), 'data', 'users.json');
+  private readonly bundledFilePath = join(process.cwd(), 'data', 'users.json');
+  private readonly writableFilePath = process.env.VERCEL
+    ? join(tmpdir(), 'tremor-guard-data', 'users.json')
+    : this.bundledFilePath;
 
   async findByEmail(email: string) {
     const normalizedEmail = email.trim().toLowerCase();
@@ -34,25 +38,38 @@ export class UserStoreService {
 
   private async readUsersFile(): Promise<UsersFile> {
     try {
-      const raw = await readFile(this.filePath, 'utf8');
-      const parsed = JSON.parse(raw) as UsersFile;
-      return {
-        users: Array.isArray(parsed.users)
-          ? parsed.users.map((user) => ({
-              ...user,
-              age: typeof user.age === 'number' ? user.age : null,
-            }))
-          : [],
-      };
+      const raw = await readFile(this.writableFilePath, 'utf8');
+      return this.parseUsersFile(raw);
     } catch {
-      const initialFile = { users: [] };
-      await this.writeUsersFile(initialFile);
-      return initialFile;
+      const seededFile = await this.readBundledUsersFile();
+      await this.writeUsersFile(seededFile);
+      return seededFile;
     }
   }
 
   private async writeUsersFile(data: UsersFile) {
-    await mkdir(dirname(this.filePath), { recursive: true });
-    await writeFile(this.filePath, JSON.stringify(data, null, 2), 'utf8');
+    await mkdir(dirname(this.writableFilePath), { recursive: true });
+    await writeFile(this.writableFilePath, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  private async readBundledUsersFile(): Promise<UsersFile> {
+    try {
+      const raw = await readFile(this.bundledFilePath, 'utf8');
+      return this.parseUsersFile(raw);
+    } catch {
+      return { users: [] };
+    }
+  }
+
+  private parseUsersFile(raw: string): UsersFile {
+    const parsed = JSON.parse(raw) as UsersFile;
+    return {
+      users: Array.isArray(parsed.users)
+        ? parsed.users.map((user) => ({
+            ...user,
+            age: typeof user.age === 'number' ? user.age : null,
+          }))
+        : [],
+    };
   }
 }
