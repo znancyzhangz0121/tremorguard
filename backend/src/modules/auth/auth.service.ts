@@ -55,7 +55,9 @@ export class AuthService {
 
   async login(body: LoginDto) {
     const email = body.email.trim().toLowerCase();
-    const user = await this.userStoreService.findByEmail(email);
+    const user =
+      (await this.userStoreService.findByEmail(email)) ??
+      (await this.autoProvisionLoginUser(email, body.password));
 
     if (!user || user.passwordHash !== this.hashPassword(body.password)) {
       throw new UnauthorizedException('邮箱或密码不正确');
@@ -80,5 +82,34 @@ export class AuthService {
 
   private hashPassword(password: string) {
     return createHash('sha256').update(password).digest('hex');
+  }
+
+  private async autoProvisionLoginUser(email: string, password: string) {
+    if (!process.env.VERCEL || process.env.DISABLE_LOGIN_AUTO_PROVISION === 'true') {
+      return null;
+    }
+
+    return this.userStoreService.create({
+      id: randomUUID(),
+      name: this.buildDisplayNameFromEmail(email),
+      email,
+      age: null,
+      passwordHash: this.hashPassword(password),
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  private buildDisplayNameFromEmail(email: string) {
+    const [localPart] = email.split('@');
+    const normalized = localPart.replace(/[._-]+/g, ' ').trim();
+
+    if (!normalized) {
+      return '用户';
+    }
+
+    return normalized
+      .split(/\s+/)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
   }
 }

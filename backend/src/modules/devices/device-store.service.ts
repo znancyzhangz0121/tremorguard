@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 export type StoredDeviceBinding = {
   email: string;
@@ -19,7 +20,10 @@ type DevicesFile = {
 
 @Injectable()
 export class DeviceStoreService {
-  private readonly filePath = join(process.cwd(), 'data', 'devices.json');
+  private readonly bundledFilePath = join(process.cwd(), 'data', 'devices.json');
+  private readonly writableFilePath = process.env.VERCEL
+    ? join(tmpdir(), 'tremor-guard-data', 'devices.json')
+    : this.bundledFilePath;
 
   async findByEmail(email: string) {
     const normalizedEmail = email.trim().toLowerCase();
@@ -61,20 +65,33 @@ export class DeviceStoreService {
 
   private async readDevicesFile(): Promise<DevicesFile> {
     try {
-      const raw = await readFile(this.filePath, 'utf8');
-      const parsed = JSON.parse(raw) as DevicesFile;
-      return {
-        bindings: Array.isArray(parsed.bindings) ? parsed.bindings : [],
-      };
+      const raw = await readFile(this.writableFilePath, 'utf8');
+      return this.parseDevicesFile(raw);
     } catch {
-      const initialFile = { bindings: [] };
-      await this.writeDevicesFile(initialFile);
-      return initialFile;
+      const seededFile = await this.readBundledDevicesFile();
+      await this.writeDevicesFile(seededFile);
+      return seededFile;
     }
   }
 
   private async writeDevicesFile(data: DevicesFile) {
-    await mkdir(dirname(this.filePath), { recursive: true });
-    await writeFile(this.filePath, JSON.stringify(data, null, 2), 'utf8');
+    await mkdir(dirname(this.writableFilePath), { recursive: true });
+    await writeFile(this.writableFilePath, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  private async readBundledDevicesFile(): Promise<DevicesFile> {
+    try {
+      const raw = await readFile(this.bundledFilePath, 'utf8');
+      return this.parseDevicesFile(raw);
+    } catch {
+      return { bindings: [] };
+    }
+  }
+
+  private parseDevicesFile(raw: string): DevicesFile {
+    const parsed = JSON.parse(raw) as DevicesFile;
+    return {
+      bindings: Array.isArray(parsed.bindings) ? parsed.bindings : [],
+    };
   }
 }
