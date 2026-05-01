@@ -36,7 +36,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { buildApiUrl } from './lib/api'
+import { buildApiUrl, readApiJson } from './lib/api'
 
 const placeholderCards = {
   reports: {
@@ -1867,7 +1867,7 @@ function App() {
         throw new Error('病历档案列表加载失败')
       }
 
-      const data = await response.json()
+      const data = await readApiJson(response, '登录失败')
       setArchives(data.archives ?? [])
       setRecordsPolicy(data.policy ?? null)
 
@@ -1909,7 +1909,7 @@ function App() {
         throw new Error('报告中心加载失败')
       }
 
-      const data = await response.json()
+      const data = await readApiJson(response, '创建账号失败')
       setReportsCenterReports(data.reports ?? [])
       setRecordsPolicy((previous) => previous ?? data.policy ?? null)
     } catch (error) {
@@ -2417,7 +2417,7 @@ function App() {
           wearSide: bindingForm.wearSide,
         }),
       })
-      const bindData = await bindResponse.json()
+      const bindData = await readApiJson(bindResponse, '账号创建成功，但设备绑定失败')
 
       if (!bindResponse.ok) {
         throw new Error(bindData.message ?? '账号创建成功，但设备绑定失败')

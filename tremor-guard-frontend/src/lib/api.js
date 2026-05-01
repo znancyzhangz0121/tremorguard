@@ -21,3 +21,21 @@ export function buildApiUrl(path, env = import.meta.env) {
 
   return `${getApiBaseUrl(env)}${normalizedPath}`
 }
+
+export async function readApiJson(response, fallbackMessage) {
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (contentType.includes('application/json')) {
+    return response.json()
+  }
+
+  const text = await response.text()
+
+  if (text.startsWith('<!doctype') || text.startsWith('<html') || text.startsWith('The page c')) {
+    throw new Error(
+      '前端已经打开，但 API 还没有连通。请在 Vercel 前端项目中设置 VITE_API_BASE_URL 指向后端域名的 /api。',
+    )
+  }
+
+  throw new Error(text || fallbackMessage)
+}
