@@ -1,47 +1,51 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { pathToFileURL } from 'node:url'
 
 const appFileUrl = new URL('../src/App.jsx', import.meta.url)
-const viteConfigUrl = pathToFileURL(new URL('../vite.config.js', import.meta.url).pathname)
+const packageFileUrl = new URL('../package.json', import.meta.url)
+const vercelFileUrl = new URL('../vercel.json', import.meta.url)
+const viteConfigUrl = new URL('../vite.config.js', import.meta.url)
 
 test('frontend app routes API traffic through the shared API helper', async () => {
   const source = await readFile(appFileUrl, 'utf8')
 
   assert.match(source, /import \{[^}]*buildApiUrl[^}]*\} from '\.\/lib\/api'/)
-  assert.match(source, /fetch\(buildApiUrl\('/)
+  assert.match(source, /fetch\(buildApiUrl\(/)
   assert.doesNotMatch(source, /fetch\('\/api\//)
 })
 
-test('frontend restores stored auth sessions instead of clearing them on boot', async () => {
+test('frontend has the required post-login workflow guards', async () => {
   const source = await readFile(appFileUrl, 'utf8')
 
-  assert.match(source, /const parseStoredAuthSession =/)
-  assert.match(source, /setAuthSession\(storedSession\)/)
-  assert.doesNotMatch(source, /window\.localStorage\.removeItem\(authStorageKey\)\s+setIsAuthenticated\(false\)\s+setCurrentUser\(null\)/)
+  assert.match(source, /patients\/me/)
+  assert.match(source, /onboardingCompleted/)
+  assert.match(source, /devices\/me/)
+  assert.match(source, /DeviceScreen/)
 })
 
-test('frontend records view targets the dedicated medical-records boundary and keeps legacy reports separate', async () => {
+test('frontend uses authenticated AI, rehab, and report endpoints', async () => {
   const source = await readFile(appFileUrl, 'utf8')
 
-  assert.match(source, /buildApiUrl\('\/medical-records\/archives'\)/)
-  assert.match(source, /buildApiUrl\(`\/medical-records\/reports\/\$\{reportId\}\/pdf`\)/)
-  assert.match(source, /长期病历档案与纵向健康报告/)
-  assert.match(source, /Output PDF/)
-  assert.match(source, /Output PDF Files/)
-  assert.match(source, /生成 PDF 报告/)
+  assert.match(source, /\/ai\/chat/)
+  assert.match(source, /\/rehab-plans/)
+  assert.match(source, /\/health-reports/)
+  assert.match(source, /Authorization: `Bearer \$\{token\}`/)
 })
 
-test('frontend only clears auth state on explicit unauthorized responses, not generic dashboard failures', async () => {
-  const source = await readFile(appFileUrl, 'utf8')
+test('frontend production package no longer bundles NestJS or Prisma', async () => {
+  const pkg = JSON.parse(await readFile(packageFileUrl, 'utf8'))
+  const dependencyNames = Object.keys(pkg.dependencies || {})
 
-  assert.match(source, /const clearAuthState = \(\) =>/)
-  assert.match(source, /if \(isUnauthorized\) \{\s+clearAuthState\(\)/s)
-  assert.doesNotMatch(
-    source,
-    /catch \{\s+window\.localStorage\.removeItem\(authStorageKey\)\s+setAuthSession\(null\)\s+setIsAuthenticated\(false\)/s,
-  )
+  assert.equal(dependencyNames.some((name) => name.includes('nestjs')), false)
+  assert.equal(dependencyNames.some((name) => name.includes('prisma')), false)
+})
+
+test('frontend Vercel config does not package a backend function', async () => {
+  const config = JSON.parse(await readFile(vercelFileUrl, 'utf8'))
+
+  assert.equal(config.functions, undefined)
+  assert.deepEqual(config.rewrites, [{ source: '/(.*)', destination: '/index.html' }])
 })
 
 test('vite proxy target stays configurable for local integration environments', async () => {

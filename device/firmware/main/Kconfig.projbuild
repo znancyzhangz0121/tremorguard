@@ -1,0 +1,35 @@
+menu "TremorGuard device settings"
+
+config TG_DEVICE_ID
+    string "Device id"
+    default "TG-ESP-DEVKIT-001"
+
+config TG_DEVICE_SECRET
+    string "Device HMAC secret"
+    default "dev-only-change-me"
+
+config TG_API_BASE_URL
+    string "API base URL"
+    default "https://api.example.invalid"
+
+config TG_WIFI_SSID
+    string "WiFi SSID"
+    default ""
+
+config TG_WIFI_PASSWORD
+    string "WiFi password"
+    default ""
+
+config TG_I2C_PORT
+    int "I2C port"
+    default 0
+
+config TG_I2C_SDA_GPIO
+    int "I2C SDA GPIO"
+    default 21
+
+config TG_I2C_SCL_GPIO
+    int "I2C SCL GPIO"
+    default 22
+
+endmenu
