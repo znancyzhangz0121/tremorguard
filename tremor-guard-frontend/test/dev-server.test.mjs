@@ -9,7 +9,7 @@ const viteConfigUrl = pathToFileURL(new URL('../vite.config.js', import.meta.url
 test('frontend app routes API traffic through the shared API helper', async () => {
   const source = await readFile(appFileUrl, 'utf8')
 
-  assert.match(source, /import \{ buildApiUrl \} from '\.\/lib\/api'/)
+  assert.match(source, /import \{[^}]*buildApiUrl[^}]*\} from '\.\/lib\/api'/)
   assert.match(source, /fetch\(buildApiUrl\('/)
   assert.doesNotMatch(source, /fetch\('\/api\//)
 })
