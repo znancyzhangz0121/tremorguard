@@ -32,7 +32,7 @@ function isAllowedOrigin(origin: string, configuredOrigins: Set<string>) {
   }
 }
 
-async function bootstrap() {
+export async function createNestApp() {
   const app = await NestFactory.create(AppModule);
   const configuredOrigins = parseConfiguredOrigins(process.env.CORS_ORIGINS);
 
@@ -67,8 +67,21 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
+  return app;
+}
+
+export async function createExpressApp() {
+  const app = await createNestApp();
+  await app.init();
+  return app.getHttpAdapter().getInstance();
+}
+
+async function bootstrap() {
+  const app = await createNestApp();
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
 }
 
-bootstrap();
+if (require.main === module) {
+  void bootstrap();
+}

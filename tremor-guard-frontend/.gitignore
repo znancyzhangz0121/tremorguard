@@ -12,6 +12,7 @@ node_modules
 node_modules_incomplete_20260404/
 dist
 dist-ssr
+api/_backend_bundle/
 *.local
 
 # Editor directories and files
