@@ -6,6 +6,9 @@ dist/
 build/
 .npm-cache/
 node_modules_incomplete_*/
+__pycache__/
+*.py[cod]
+*.db
 
 .env
 .env.*
@@ -13,5 +16,13 @@ node_modules_incomplete_*/
 
 backend/node_modules/
 backend/dist/
+backend/.venv/
+backend/.pytest_cache/
+backend/tremorguard.db
+backend/*.db
+backend/data/
 tremor-guard-frontend/node_modules/
 tremor-guard-frontend/dist/
+tremor-guard-frontend_Claude Design/node_modules/
+tremor-guard-frontend_Claude Design/dist/
+tremor-guard-frontend_Claude Design/

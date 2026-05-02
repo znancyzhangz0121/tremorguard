@@ -1,5 +1,8 @@
 node_modules
 dist
+.venv
+.pytest_cache
+*.db
 .env
 .npm-cache
 coverage

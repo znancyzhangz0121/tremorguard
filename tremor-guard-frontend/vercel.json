@@ -1,27 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "node scripts/prepare-vercel-backend.mjs && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "api/_backend_bundle/**",
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/api",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/docs/(.*)",
-      "destination": "/api/index.js"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
